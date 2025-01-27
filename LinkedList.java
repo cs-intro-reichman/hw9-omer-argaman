@@ -266,7 +266,21 @@ public class LinkedList {
 	 * A textual representation of this list, for debugging.
 	 */
 	public String toString() {
-		if (size == 0) {
+	
+			ListIterator itr = this.iterator();
+			String str = "";
+			while (itr.hasNext()) {
+				str += "(" + itr.current.block.baseAddress + " , " + itr.current.block.length + ") ";
+				itr.next();
+			}
+			return str;
+		}
+	}
+
+
+
+
+/*		if (size == 0) {
 			return ""; // Return empty string for an empty list
 		}
 	
@@ -284,4 +298,4 @@ public class LinkedList {
 	
 		return result; // Return the formatted result
 	}
-}
+		*/
