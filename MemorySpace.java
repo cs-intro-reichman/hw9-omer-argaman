@@ -57,9 +57,36 @@ public class MemorySpace {
 	 *        the length (in words) of the memory block that has to be allocated
 	 * @return the base address of the allocated block, or -1 if unable to allocate
 	 */
-	public int malloc(int length) {		
-		//// Replace the following statement with your code
-		return -1;
+	public int malloc(int length) {
+		if (length <= 0) {
+			return -1; // Invalid request
+		}
+	
+		for (int i = 0; i < freeList.getSize(); i++) {
+			MemoryBlock freeBlock = freeList.getBlock(i);
+	
+			if (freeBlock.length >= length) {
+				int allocatedBaseAddress = freeBlock.baseAddress;
+	
+				// Handle exact match
+				if (freeBlock.length == length) {
+					freeList.remove(i);
+				} 
+				// Handle partial allocation
+				else {
+					freeBlock.baseAddress += length;
+					freeBlock.length -= length;
+				}
+	
+				// Create and add the new allocated block
+				MemoryBlock allocatedBlock = new MemoryBlock(allocatedBaseAddress, length);
+				allocatedList.addLast(allocatedBlock);
+	
+				return allocatedBaseAddress; // Successfully allocated
+			}
+		}
+	
+		return -1; // Allocation failed
 	}
 
 	/**
@@ -70,9 +97,52 @@ public class MemorySpace {
 	 * @param baseAddress
 	 *            the starting address of the block to freeList
 	 */
-	public void free(int address) {
-		//// Write your code here
-	}
+/**
+ * Frees the memory block whose base address equals the given address.
+ * This implementation deletes the block whose base address equals the given 
+ * address from the allocatedList, and adds it to the free list. 
+ * 
+ * @param address
+ *        the starting address of the block to be freed
+ */
+/**
+ * Frees the memory block whose base address equals the given address.
+ * 
+ * @param address the starting address of the block to be freed
+ * @throws IllegalArgumentException if the address is invalid or cannot be freed
+ */
+public void free(int address) {
+    if (allocatedList.getSize() == 0) {
+        throw new IllegalArgumentException("index must be between 0 and size");
+    }
+
+    for (int i = 0; i < allocatedList.getSize(); i++) {
+        MemoryBlock allocatedBlock = allocatedList.getBlock(i);
+
+        if (allocatedBlock.baseAddress == address) {
+            // Remove from allocatedList
+            allocatedList.remove(i);
+
+            // Add the freed block to the freeList (keep sorted order)
+            for (int j = 0; j < freeList.getSize(); j++) {
+                MemoryBlock freeBlock = freeList.getBlock(j);
+
+                if (allocatedBlock.baseAddress < freeBlock.baseAddress) {
+                    freeList.add(j, allocatedBlock);
+                    return;
+                }
+            }
+
+            // If no suitable position was found, add to the end
+            freeList.addLast(allocatedBlock);
+            return;
+        }
+    }
+
+    throw new IllegalArgumentException("index must be between 0 and size");
+}
+
+
 	
 	/**
 	 * A textual representation of the free list and the allocated list of this memory space, 
@@ -88,6 +158,32 @@ public class MemorySpace {
 	 * In this implementation Malloc does not call defrag.
 	 */
 	public void defrag() {
-		//// Write your code here
+		// Sort the freeList by baseAddress
+		for (int i = 0; i < freeList.getSize() - 1; i++) {
+			for (int j = 0; j < freeList.getSize() - i - 1; j++) {
+				MemoryBlock block1 = freeList.getBlock(j);
+				MemoryBlock block2 = freeList.getBlock(j + 1);
+	
+				if (block1.baseAddress > block2.baseAddress) {
+					// Swap the blocks
+					freeList.remove(j + 1);
+					freeList.add(j, block2);
+				}
+			}
+		}
+	
+		// Merge adjacent blocks
+		for (int i = 0; i < freeList.getSize() - 1; ) {
+			MemoryBlock current = freeList.getBlock(i);
+			MemoryBlock next = freeList.getBlock(i + 1);
+	
+			if (current.baseAddress + current.length == next.baseAddress) {
+				// Merge the blocks
+				current.length += next.length;
+				freeList.remove(i + 1);
+			} else {
+				i++; // Only increment if no merge occurred
+			}
+		}
 	}
 }
